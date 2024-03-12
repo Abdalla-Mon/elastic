@@ -8,10 +8,12 @@ const client = new Client({
     },
 });
 
-export async function handleSearch(q){
+export async function handleSearch(q,page = 1,size=2) {
+
     const elasticSearchParams = {
         index: "main",
-        size: 20,
+        size: size,
+        from: page,
         body: {
             query: {
                 multi_match: {
@@ -21,20 +23,9 @@ export async function handleSearch(q){
             },
         },
     };
-    const data = await client.search(elasticSearchParams);
+    let data = await client.search(elasticSearchParams);
     const documents = data.hits.hits.map((hit) => hit._source);
 
-    return documents;
-    // const response = await fetch(`https://elastic-ten.vercel.app/?q=${search}`);
-    // if (!response.ok) {
-    //     console.error("HTTP error! status: ", response.status);
-    //     console.error("The actual response is: ", await response.text());
-    //     return;
-    // } else if (!response.headers.get("content-type").includes("application/json")) {
-    //     console.error("The response is not JSON. The actual response is: ", await response.text());
-    //     return;
-    // }
-    //
-    // const data = await response.json();
-    // console.log(data)
+    const total = data.hits.total;
+    return {documents,total:total.value};
 }
