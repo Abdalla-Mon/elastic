@@ -18,6 +18,7 @@ export const ElasticSearchProvider = ({ children }) => {
         try {
             if (!search || search.length === 0) {
                 setData(null);
+                setLoading(false);
                 return;
             }
             const data = await handleSearch(search, page - 1, size);
