@@ -13,7 +13,6 @@ export default function ElasticSearch() {
         });
         setLoading(false)
     }
-    console.log(data)
   return (
     <div className={"container mx-auto"}>
    <div className={"searchBar py-3"}>
