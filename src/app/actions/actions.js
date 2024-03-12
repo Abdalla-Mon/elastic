@@ -1,7 +1,7 @@
 "use server"
 
 export async function handleSearch(search){
-    const data= await fetch(`https://elastic-ten.vercel.app/api?q=${search}`)
+    const data= await fetch(`http://localhost:3001/api?q=${search}`)
           .then(response=>response.json())
           .then(data=> data
           )
