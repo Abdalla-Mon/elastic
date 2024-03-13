@@ -12,5 +12,8 @@ export default function ElasticPagination(){
     };
     const {total}=data
     const count = Math.ceil(total/size)
+    if(!count){
+        return null
+    }
     return <Pagination count={count} color="primary" page={+page} onChange={handleChange} className={"mx-auto w-fit my-5"} />
 }

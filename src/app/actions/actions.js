@@ -8,17 +8,43 @@ const client = new Client({
     },
 });
 
-export async function handleSearch(q,page = 1,size=2) {
-
+export async function handleSearch(q, page = 1, size = 2, selectedApplications = [], selectedTechnologies = [],noFilters=false) {
     const elasticSearchParams = {
         index: "main",
         size: size,
         from: page,
         body: {
             query: {
-                multi_match: {
-                    query: q,
-                    fields: ["abstract", "title"],
+                bool: {
+                    must: [
+                        {
+                            multi_match: {
+                                query: q,
+                                fields: ["abstract", "title"],
+                            },
+                        },
+                    ],
+                    filter: noFilters ? [] : {
+                        bool: {
+                            should: [
+                                ...(selectedApplications.length > 0 ? [{ terms: { "applications.keyword": selectedApplications } }] : []),
+                                ...(selectedTechnologies.length > 0 ? [{ terms: { "technologies.keyword": selectedTechnologies } }] : []),
+                            ],
+                            minimum_should_match: 1,
+                        },
+                    },
+                },
+            },
+            aggs: {
+                unique_applications: {
+                    terms: {
+                        field: "applications.keyword",
+                    },
+                },
+                unique_technologies: {
+                    terms: {
+                        field: "technologies.keyword",
+                    },
                 },
             },
         },
@@ -27,5 +53,8 @@ export async function handleSearch(q,page = 1,size=2) {
     const documents = data.hits.hits.map((hit) => hit._source);
 
     const total = data.hits.total;
-    return {documents,total:total.value};
+    const uniqueApplications = data.aggregations.unique_applications.buckets.map(bucket => bucket.key);
+    const uniqueTechnologies = data.aggregations.unique_technologies.buckets.map(bucket => bucket.key);
+
+    return { documents, total: total.value, uniqueApplications, uniqueTechnologies };
 }

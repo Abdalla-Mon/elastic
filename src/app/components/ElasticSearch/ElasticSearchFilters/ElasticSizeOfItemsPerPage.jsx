@@ -10,7 +10,7 @@ export default function ElasticSizeOfItemsPerPage(){
     }
     return(
           <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }} className={"ml-auto flex w-fit"}>
-              <InputLabel id="demo-simple-select-standard-label">Age</InputLabel>
+              <InputLabel id="demo-simple-select-standard-label">Items per page</InputLabel>
               <Select
                     labelId="demo-simple-select-standard-label"
                     id="demo-simple-select-standard"

@@ -10,7 +10,7 @@ export function FontSizeChanger() {
     };
 
     return (
-          <div>
+          <div className={"w-full"}>
               <Typography id="font-size-slider" gutterBottom>
                   Font Size
               </Typography>
