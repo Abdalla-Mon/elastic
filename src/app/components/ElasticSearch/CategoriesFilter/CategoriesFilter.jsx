@@ -25,10 +25,16 @@ export function CategoriesFilter() {
 
     const uniqueApplications = data?.uniqueApplications || [];
     const uniqueTechnologies = data?.uniqueTechnologies || [];
+    useEffect(() => {
+            setFetchQuery(search);
+            const newSelectedApplications = selectedApplications.filter(app => uniqueApplications.includes(app)    )
+            setSelectedApplications(newSelectedApplications);
+            const newSelectedTechnologies = selectedTechnologies.filter(tech => uniqueTechnologies.includes(tech));
+            setSelectedTechnologies(newSelectedTechnologies);
 
+    }, [data]);
 function handleAppsChange(newValue) {
     setSelectedApplications(newValue);
-
 }
 function handleTechsChange(newValue) {
     setSelectedTechnologies(newValue);
@@ -43,6 +49,7 @@ function handleTechsChange(newValue) {
                     onChange={(event, newValue) => {
                         handleAppsChange(newValue);
                     }}
+
                     renderInput={(params) => (
                           <TextField {...params} variant="outlined" label="Application" />
                     )}
