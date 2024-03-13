@@ -48,7 +48,7 @@ function handleTechsChange(newValue) {
                     )}
                     renderTags={(value, getTagProps) =>
                           value.map((option, index) => (
-                                <Chip variant="outlined" label={option} {...getTagProps({ index })} />
+                                <Chip variant="outlined" label={option} {...getTagProps({ index })}  key={option+index} />
                           ))
                     }
               />
@@ -66,7 +66,7 @@ function handleTechsChange(newValue) {
                     )}
                     renderTags={(value, getTagProps) =>
                           value.map((option, index) => (
-                                <Chip variant="outlined" label={option} {...getTagProps({ index })} />
+                                <Chip variant="outlined" label={option} {...getTagProps({ index })}    key={option+index}/>
                           ))
                     }
               />
