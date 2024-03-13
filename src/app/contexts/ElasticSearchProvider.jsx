@@ -20,6 +20,7 @@ export const ElasticSearchProvider = ({ children }) => {
         try {
             if (!search || search.length === 0) {
                 setData(null);
+
                 setLoading(false);
                 return;
             }

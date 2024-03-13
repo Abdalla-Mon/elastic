@@ -8,7 +8,6 @@ export function CategoriesFilter() {
     const { search, selectedApplications, page, size, setSelectedApplications, selectedTechnologies, setSelectedTechnologies } = useContext(ElasticSearchContext);
     const [data, setData] = useState([]);
     const [fetchQuery, setFetchQuery] = useState(search);
-
     useEffect(() => {
         const fetchData = async () => {
             const newData = await handleSearch(fetchQuery, page-1, size, selectedApplications, selectedTechnologies, true);
@@ -25,14 +24,7 @@ export function CategoriesFilter() {
 
     const uniqueApplications = data?.uniqueApplications || [];
     const uniqueTechnologies = data?.uniqueTechnologies || [];
-    useEffect(() => {
-            setFetchQuery(search);
-            const newSelectedApplications = selectedApplications.filter(app => uniqueApplications.includes(app)    )
-            setSelectedApplications(newSelectedApplications);
-            const newSelectedTechnologies = selectedTechnologies.filter(tech => uniqueTechnologies.includes(tech));
-            setSelectedTechnologies(newSelectedTechnologies);
 
-    }, [data]);
 function handleAppsChange(newValue) {
     setSelectedApplications(newValue);
 }
@@ -45,11 +37,10 @@ function handleTechsChange(newValue) {
                     multiple
                     id="application-select"
                     options={uniqueApplications}
-                    value={selectedApplications}
+                    value={uniqueApplications.filter((option) => selectedApplications.includes(option))}
                     onChange={(event, newValue) => {
                         handleAppsChange(newValue);
                     }}
-
                     renderInput={(params) => (
                           <TextField {...params} variant="outlined" label="Application" />
                     )}
@@ -59,12 +50,11 @@ function handleTechsChange(newValue) {
                           ))
                     }
               />
-
               <Autocomplete
                     multiple
                     id="technology-select"
                     options={uniqueTechnologies}
-                    value={selectedTechnologies}
+                    value={uniqueTechnologies.filter((option) => selectedTechnologies.includes(option))}
                     onChange={(event, newValue) => {
                         handleTechsChange(newValue);
                     }}
