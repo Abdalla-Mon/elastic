@@ -8,7 +8,7 @@ const client = new Client({
     },
 });
 
-export async function handleSearch(q, page = 1, size = 2, selectedApplications = [], selectedTechnologies = [],noFilters=false) {
+export async function handleSearch(q, page = 1, size = 2, selectedApplications = [], selectedTechnologies = [], selectedTypes = [], selectedOrganizations = [], selectedCountries = [], selectedDate = null, noFilters=false) {
     const elasticSearchParams = {
         index: "main",
         size: size,
@@ -17,7 +17,7 @@ export async function handleSearch(q, page = 1, size = 2, selectedApplications =
             query: {
                 bool: {
                     must: [
-                        {
+                        q === "" ? { match_all: {} } : {
                             multi_match: {
                                 query: q,
                                 fields: ["abstract", "title"],
@@ -29,6 +29,10 @@ export async function handleSearch(q, page = 1, size = 2, selectedApplications =
                             should: [
                                 ...(selectedApplications.length > 0 ? [{ terms: { "applications.keyword": selectedApplications } }] : []),
                                 ...(selectedTechnologies.length > 0 ? [{ terms: { "technologies.keyword": selectedTechnologies } }] : []),
+                                ...(selectedTypes.length > 0 ? [{ terms: { "type.keyword": selectedTypes } }] : []),
+                                ...(selectedOrganizations.length > 0 ? [{ terms: { "organisation_name.keyword": selectedOrganizations } }] : []),
+                                ...(selectedCountries.length > 0 ? [{ terms: { "country.keyword": selectedCountries } }] : []),
+                                ...(selectedDate.length > 0  ? [{ terms: { "filter_date": selectedDate } }] : []),
                             ],
                             minimum_should_match: 1,
                         },
@@ -46,15 +50,41 @@ export async function handleSearch(q, page = 1, size = 2, selectedApplications =
                         field: "technologies.keyword",
                     },
                 },
+                unique_types: {
+                    terms: {
+                        field: "type.keyword",
+                    },
+                },
+                unique_organizations: {
+                    terms: {
+                        field: "organisation_name.keyword",
+                    },
+                },
+                unique_countries: {
+                    terms: {
+                        field: "country.keyword",
+                    },
+                },
+                unique_dates: {
+                    terms: {
+                        field: "filter_date",
+
+                    },
+                },
             },
         },
     };
-    let data = await client.search(elasticSearchParams);
+
+    let response = await client.search(elasticSearchParams);
+    const data = response;
     const documents = data.hits.hits.map((hit) => hit._source);
 
     const total = data.hits.total;
     const uniqueApplications = data.aggregations.unique_applications.buckets.map(bucket => bucket.key);
     const uniqueTechnologies = data.aggregations.unique_technologies.buckets.map(bucket => bucket.key);
-
-    return { documents, total: total.value, uniqueApplications, uniqueTechnologies };
+    const uniqueTypes = data.aggregations.unique_types.buckets.map(bucket => bucket.key);
+    const uniqueOrganizations = data.aggregations.unique_organizations.buckets.map(bucket => bucket.key);
+    const uniqueCountries = data.aggregations.unique_countries.buckets.map(bucket => bucket.key);
+    const uniqueDates = data.aggregations.unique_dates.buckets.map(bucket => bucket.key_as_string.substring(0, 10));
+    return { documents, total: total.value, uniqueApplications, uniqueTechnologies, uniqueTypes, uniqueOrganizations, uniqueCountries, uniqueDates };
 }

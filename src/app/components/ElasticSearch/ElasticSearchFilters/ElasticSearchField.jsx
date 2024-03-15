@@ -9,7 +9,7 @@ export default function ElasticSearchField(){
     }
     useEffect(() => {
         if(!search || search.length === 0){
-            setSearch(" ")
+            setSearch("")
         }
 
     },[search]);

@@ -1,14 +1,14 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { Box, Button, Card, CardContent, Typography } from "@mui/material";
+import {Box, Button, Card, CardContent, Link, Typography} from "@mui/material";
 import { ElasticSearchContext } from "@/app/contexts/ElasticSearchContext";
 import { motion } from "framer-motion";
 
 export function ElasticCard({ data }) {
-  const { fontSize, search } = useContext(ElasticSearchContext);
+  const {  search } = useContext(ElasticSearchContext);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const ref = useRef();
-
+console.log(data)
   useEffect(() => {
     const checkOverflow = () => {
       setIsOverflowing(ref.current.scrollHeight > ref.current.offsetHeight);
@@ -20,7 +20,7 @@ export function ElasticCard({ data }) {
   const highlightedText = data.abstract
     .split(new RegExp(`(${search})`, "gi"))
     .map((part, i) =>
-      part.toLowerCase() === search.toLowerCase() ? (
+      part.toLowerCase() === search.toLowerCase() &&part!== ""? (
         <span key={i} style={{ backgroundColor: "yellow" }}>
           {part}
         </span>
@@ -31,6 +31,8 @@ export function ElasticCard({ data }) {
   return (
     <Card sx={{ boxShadow: 3,}} className={"border border-gray-200"}>
       <CardContent  >
+        <Link className={"cursor-pointer"}>
+
         <Typography
           gutterBottom
           variant="h5"
@@ -39,6 +41,7 @@ export function ElasticCard({ data }) {
         >
           {data.title}
         </Typography>
+        </Link>
         <DisplayData
           arrayOfData={data.organisation_name}
           text={data.country}
@@ -59,7 +62,6 @@ export function ElasticCard({ data }) {
           <Typography
             variant="body1"
             color="text.secondary"
-            sx={{ fontSize: fontSize + "px" }}
           >
             {highlightedText}
           </Typography>

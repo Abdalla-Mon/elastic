@@ -10,8 +10,21 @@ import { FontSizeChanger } from "@/app/components/ElasticSearch/ElasticSearchFil
 import { CategoriesFilter } from "@/app/components/ElasticSearch/CategoriesFilter/CategoriesFilter";
 import { motion } from "framer-motion";
 export default function ElasticSearch() {
-  const { search, page, size, error, fetchData ,selectedApplications,selectedTechnologies,data} =
-    useContext(ElasticSearchContext);
+  const {
+    search,
+    page,
+    size,
+    error,
+    fetchData,
+    selectedApplications,
+    selectedTechnologies,
+    selectedTypes,
+    selectedOrganizations,
+    selectedCountries,
+    selectedDate,
+    data
+  } = useContext(ElasticSearchContext);
+
 const [show, setShow] = useState(false);
   const animation = {
     animate: show ? { height: "auto" } : { height: 0 },
@@ -19,7 +32,7 @@ const [show, setShow] = useState(false);
   };
   useEffect(() => {
     fetchData();
-  }, [search, page, size,selectedApplications,selectedTechnologies]);
+  }, [search, page, size, selectedApplications, selectedTechnologies, selectedTypes, selectedOrganizations, selectedCountries, selectedDate]);
   if (error) {
     return <p>Error: {error}</p>;
   }
