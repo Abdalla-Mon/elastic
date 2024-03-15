@@ -1,14 +1,20 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import {Box, Button, Card, CardContent, Link, Typography} from "@mui/material";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Link,
+  Typography,
+} from "@mui/material";
 import { ElasticSearchContext } from "@/app/contexts/ElasticSearchContext";
 import { motion } from "framer-motion";
 
 export function ElasticCard({ data }) {
-  const {  search } = useContext(ElasticSearchContext);
+  const { search } = useContext(ElasticSearchContext);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const ref = useRef();
-console.log(data)
   useEffect(() => {
     const checkOverflow = () => {
       setIsOverflowing(ref.current.scrollHeight > ref.current.offsetHeight);
@@ -20,7 +26,7 @@ console.log(data)
   const highlightedText = data.abstract
     .split(new RegExp(`(${search})`, "gi"))
     .map((part, i) =>
-      part.toLowerCase() === search.toLowerCase() &&part!== ""? (
+      part.toLowerCase() === search.toLowerCase() && part !== "" ? (
         <span key={i} style={{ backgroundColor: "yellow" }}>
           {part}
         </span>
@@ -29,18 +35,17 @@ console.log(data)
       ),
     );
   return (
-    <Card sx={{ boxShadow: 3,}} className={"border border-gray-200"}>
-      <CardContent  >
-        <Link className={"cursor-pointer"}>
-
-        <Typography
-          gutterBottom
-          variant="h5"
-          component="div"
-          sx={{ fontWeight: "bold" }}
-        >
-          {data.title}
-        </Typography>
+    <Card sx={{ boxShadow: 3 }} className={"border border-gray-200"}>
+      <CardContent>
+        <Link className={"cursor-pointer"} href={data.url}>
+          <Typography
+            gutterBottom
+            variant="h5"
+            component="div"
+            sx={{ fontWeight: "bold" }}
+          >
+            {data.title}
+          </Typography>
         </Link>
         <DisplayData
           arrayOfData={data.organisation_name}
@@ -59,10 +64,7 @@ console.log(data)
           overflow="hidden"
           position="relative"
         >
-          <Typography
-            variant="body1"
-            color="text.secondary"
-          >
+          <Typography variant="body1" color="text.secondary">
             {highlightedText}
           </Typography>
           {!isExpanded && isOverflowing && (

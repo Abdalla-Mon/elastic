@@ -36,52 +36,50 @@ export async function handleSearchTwo(
                     fields: ["abstract", "title"],
                   },
                 },
-            ...(selectedTypes.length > 0
-              ? [{ terms: { "type.keyword": selectedTypes } }]
-              : []),
-            ...(selectedOrganizations.length > 0
-              ? [
-                  {
-                    terms: {
-                      "organisation_name.keyword": selectedOrganizations,
-                    },
-                  },
-                ]
-              : []),
-            ...(selectedCountries.length > 0
-              ? [{ terms: { "country.keyword": selectedCountries } }]
-              : []),
-            ...(selectedDate.length > 0
-              ? [{ terms: { filter_date: selectedDate } }]
-              : []),
           ],
-          filter: noFilters
-            ? []
-            : {
-                bool: {
-                  should: [
-                    ...(selectedApplications.length > 0
-                      ? [
-                          {
-                            terms: {
-                              "applications.keyword": selectedApplications,
-                            },
-                          },
-                        ]
-                      : []),
-                    ...(selectedTechnologies.length > 0
-                      ? [
-                          {
-                            terms: {
-                              "technologies.keyword": selectedTechnologies,
-                            },
-                          },
-                        ]
-                      : []),
-                  ],
-                  minimum_should_match: 1,
-                },
-              },
+          filter: {
+            bool: {
+              should: [
+                ...(selectedApplications.length > 0
+                  ? [
+                      {
+                        terms: {
+                          "applications.keyword": selectedApplications,
+                        },
+                      },
+                    ]
+                  : []),
+                ...(selectedTechnologies.length > 0
+                  ? [
+                      {
+                        terms: {
+                          "technologies.keyword": selectedTechnologies,
+                        },
+                      },
+                    ]
+                  : []),
+                ...(selectedTypes.length > 0
+                  ? [{ terms: { "type.keyword": selectedTypes } }]
+                  : []),
+                ...(selectedOrganizations.length > 0
+                  ? [
+                      {
+                        terms: {
+                          "organisation_name.keyword": selectedOrganizations,
+                        },
+                      },
+                    ]
+                  : []),
+                ...(selectedCountries.length > 0
+                  ? [{ terms: { "country.keyword": selectedCountries } }]
+                  : []),
+                ...(selectedDate.length > 0
+                  ? [{ terms: { filter_date: selectedDate } }]
+                  : []),
+              ],
+              minimum_should_match: 1,
+            },
+          },
         },
       },
       aggs: {
@@ -95,193 +93,51 @@ export async function handleSearchTwo(
             field: "technologies.keyword",
           },
         },
-        filtered: {
-          filter: {
-            bool: {
-              should: [
-                ...(selectedApplications.length > 0
-                  ? [
-                      {
-                        terms: { "applications.keyword": selectedApplications },
-                      },
-                    ]
-                  : []),
-                ...(selectedTechnologies.length > 0
-                  ? [
-                      {
-                        terms: { "technologies.keyword": selectedTechnologies },
-                      },
-                    ]
-                  : []),
-              ],
-              minimum_should_match:
-                selectedApplications.length > 0 ||
-                selectedTechnologies.length > 0
-                  ? 1
-                  : 0,
-            },
+        unique_types: {
+          terms: {
+            field: "type.keyword",
           },
-          aggs: {
-            unique_applications: {
-              filter: {
-                bool: {
-                  should: [
-                    ...(selectedApplications.length > 0
-                      ? [
-                          {
-                            terms: {
-                              "applications.keyword": selectedApplications,
-                            },
-                          },
-                        ]
-                      : [{ match_all: {} }]),
-                  ],
-                  minimum_should_match: selectedApplications.length > 0 ? 1 : 0,
-                },
-              },
-              aggs: {
-                unique_types: {
-                  terms: {
-                    field: "type.keyword",
-                  },
-                },
-                unique_organizations: {
-                  terms: {
-                    field: "organisation_name.keyword",
-                  },
-                },
-                unique_countries: {
-                  terms: {
-                    field: "country.keyword",
-                  },
-                },
-                unique_dates: {
-                  terms: {
-                    field: "filter_date",
-                  },
-                },
-              },
-            },
-            unique_technologies: {
-              filter: {
-                bool: {
-                  should: [
-                    ...(selectedTechnologies.length > 0
-                      ? [
-                          {
-                            terms: {
-                              "technologies.keyword": selectedTechnologies,
-                            },
-                          },
-                        ]
-                      : [{ match_all: {} }]),
-                  ],
-                  minimum_should_match: selectedTechnologies.length > 0 ? 1 : 0,
-                },
-              },
-              aggs: {
-                unique_types: {
-                  terms: {
-                    field: "type.keyword",
-                  },
-                },
-                unique_organizations: {
-                  terms: {
-                    field: "organisation_name.keyword",
-                  },
-                },
-                unique_countries: {
-                  terms: {
-                    field: "country.keyword",
-                  },
-                },
-                unique_dates: {
-                  terms: {
-                    field: "filter_date",
-                  },
-                },
-              },
-            },
+        },
+        unique_organizations: {
+          terms: {
+            field: "organisation_name.keyword",
+          },
+        },
+        unique_countries: {
+          terms: {
+            field: "country.keyword",
+          },
+        },
+        unique_dates: {
+          terms: {
+            field: "filter_date",
           },
         },
       },
     },
   };
+
   let response = await client.search(elasticSearchParams);
   const data = response;
   const documents = data.hits.hits.map((hit) => hit._source);
 
   const total = data.hits.total;
-  console.log(
-    data.aggregations.filtered.unique_applications.unique_types.buckets,
+  const uniqueApplications = data.aggregations.unique_applications.buckets.map(
+    (bucket) => bucket.key,
   );
-
-  const uniqueApplications = data.aggregations.unique_applications
-    ? data.aggregations.unique_applications.buckets.map((bucket) => bucket.key)
-    : [];
-
-  const uniqueTechnologies = data.aggregations.unique_technologies
-    ? data.aggregations.unique_technologies.buckets.map((bucket) => bucket.key)
-    : [];
-
-  const uniqueTypes = Array.from(
-    new Set([
-      ...(data.aggregations.filtered.unique_applications
-        ? data.aggregations.filtered.unique_applications.unique_types.buckets.map(
-            (typeBucket) => typeBucket.key,
-          )
-        : []),
-      ...(data.aggregations.filtered.unique_technologies
-        ? data.aggregations.filtered.unique_technologies.unique_types.buckets.map(
-            (typeBucket) => typeBucket.key,
-          )
-        : []),
-    ]),
+  const uniqueTechnologies = data.aggregations.unique_technologies.buckets.map(
+    (bucket) => bucket.key,
   );
-
-  const uniqueOrganizations = Array.from(
-    new Set([
-      ...(data.aggregations.filtered.unique_applications
-        ? data.aggregations.filtered.unique_applications.unique_organizations.buckets.map(
-            (orgBucket) => orgBucket.key,
-          )
-        : []),
-      ...(data.aggregations.filtered.unique_technologies
-        ? data.aggregations.filtered.unique_technologies.unique_organizations.buckets.map(
-            (orgBucket) => orgBucket.key,
-          )
-        : []),
-    ]),
+  const uniqueTypes = data.aggregations.unique_types.buckets.map(
+    (bucket) => bucket.key,
   );
-
-  const uniqueCountries = Array.from(
-    new Set([
-      ...(data.aggregations.filtered.unique_applications
-        ? data.aggregations.filtered.unique_applications.unique_countries.buckets.map(
-            (countryBucket) => countryBucket.key,
-          )
-        : []),
-      ...(data.aggregations.filtered.unique_technologies
-        ? data.aggregations.filtered.unique_technologies.unique_countries.buckets.map(
-            (countryBucket) => countryBucket.key,
-          )
-        : []),
-    ]),
+  const uniqueOrganizations =
+    data.aggregations.unique_organizations.buckets.map((bucket) => bucket.key);
+  const uniqueCountries = data.aggregations.unique_countries.buckets.map(
+    (bucket) => bucket.key,
   );
-
-  const uniqueDates = Array.from(
-    new Set([
-      ...(data.aggregations.filtered.unique_applications
-        ? data.aggregations.filtered.unique_applications.unique_dates.buckets.map(
-            (dateBucket) => dateBucket.key_as_string.substring(0, 10),
-          )
-        : []),
-      ...(data.aggregations.filtered.unique_technologies
-        ? data.aggregations.filtered.unique_technologies.unique_dates.buckets.map(
-            (dateBucket) => dateBucket.key_as_string.substring(0, 10),
-          )
-        : []),
-    ]),
+  const uniqueDates = data.aggregations.unique_dates.buckets.map((bucket) =>
+    bucket.key_as_string.substring(0, 10),
   );
   return {
     documents,
