@@ -39,7 +39,7 @@ export async function handleSearchTwo(
           ],
           filter: {
             bool: {
-              should: [
+              must: [
                 ...(selectedApplications.length > 0
                   ? [
                       {
@@ -77,7 +77,6 @@ export async function handleSearchTwo(
                   ? [{ terms: { filter_date: selectedDate } }]
                   : []),
               ],
-              minimum_should_match: 1,
             },
           },
         },
