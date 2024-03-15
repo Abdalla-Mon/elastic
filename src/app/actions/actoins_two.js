@@ -60,21 +60,6 @@ export async function handleSearchTwo(
         },
   ];
 
-  const filterFields = {
-    applications: selectedApplications,
-    technologies: selectedTechnologies,
-    type: selectedTypes,
-    organisation_name: selectedOrganizations,
-    country: selectedCountries,
-    filter_date: selectedDate,
-  };
-  const mustFilters = Object.keys(filterFields)
-    .filter((key) => key !== currentFilter)
-    .flatMap((key) =>
-      key === "filter_date"
-        ? createRangeObject(FIELD_NAMES[key], filterFields[key])
-        : createTermsObject(FIELD_NAMES[key], filterFields[key]),
-    );
   const elasticSearchParams = {
     index: "main",
     size: size,
