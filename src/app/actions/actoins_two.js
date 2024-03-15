@@ -8,6 +8,34 @@ const client = new Client({
   },
 });
 
+const FIELD_NAMES = {
+  applications: "applications.keyword",
+  technologies: "technologies.keyword",
+  type: "type.keyword",
+  organisation_name: "organisation_name.keyword",
+  country: "country.keyword",
+  filter_date: "filter_date",
+};
+
+function createTermsObject(fieldName, values) {
+  return values.length ? [{ terms: { [fieldName]: values } }] : [];
+}
+
+function createRangeObject(fieldName, value) {
+  return value.length
+    ? [
+        {
+          range: {
+            [fieldName]: {
+              gte: `${value}-01-01`,
+              lte: `${value}-12-31`,
+            },
+          },
+        },
+      ]
+    : [];
+}
+
 export async function handleSearchTwo(
   q,
   page = 1,
@@ -19,7 +47,34 @@ export async function handleSearchTwo(
   selectedCountries = [],
   selectedDate = null,
   noFilters = false,
+  currentFilter = null,
 ) {
+  const mustQuery = [
+    q === ""
+      ? { match_all: {} }
+      : {
+          multi_match: {
+            query: q,
+            fields: ["abstract", "title"],
+          },
+        },
+  ];
+
+  const filterFields = {
+    applications: selectedApplications,
+    technologies: selectedTechnologies,
+    type: selectedTypes,
+    organisation_name: selectedOrganizations,
+    country: selectedCountries,
+    filter_date: selectedDate,
+  };
+  const mustFilters = Object.keys(filterFields)
+    .filter((key) => key !== currentFilter)
+    .flatMap((key) =>
+      key === "filter_date"
+        ? createRangeObject(FIELD_NAMES[key], filterFields[key])
+        : createTermsObject(FIELD_NAMES[key], filterFields[key]),
+    );
   const elasticSearchParams = {
     index: "main",
     size: size,
@@ -27,64 +82,25 @@ export async function handleSearchTwo(
     body: {
       query: {
         bool: {
-          must: [
-            q === ""
-              ? { match_all: {} }
-              : {
-                  multi_match: {
-                    query: q,
-                    fields: ["abstract", "title"],
-                  },
-                },
-          ],
+          must: mustQuery,
           filter: {
             bool: {
               must: [
-                ...(selectedApplications.length > 0
-                  ? [
-                      {
-                        terms: {
-                          "applications.keyword": selectedApplications,
-                        },
-                      },
-                    ]
-                  : []),
-                ...(selectedTechnologies.length > 0
-                  ? [
-                      {
-                        terms: {
-                          "technologies.keyword": selectedTechnologies,
-                        },
-                      },
-                    ]
-                  : []),
-                ...(selectedTypes.length > 0
-                  ? [{ terms: { "type.keyword": selectedTypes } }]
-                  : []),
-                ...(selectedOrganizations.length > 0
-                  ? [
-                      {
-                        terms: {
-                          "organisation_name.keyword": selectedOrganizations,
-                        },
-                      },
-                    ]
-                  : []),
-                ...(selectedCountries.length > 0
-                  ? [{ terms: { "country.keyword": selectedCountries } }]
-                  : []),
-                ...(selectedDate.length > 0
-                  ? [
-                      {
-                        range: {
-                          filter_date: {
-                            gte: `${selectedDate}-01-01`,
-                            lte: `${selectedDate}-12-31`,
-                          },
-                        },
-                      },
-                    ]
-                  : []),
+                ...createTermsObject(
+                  FIELD_NAMES.applications,
+                  selectedApplications,
+                ),
+                ...createTermsObject(
+                  FIELD_NAMES.technologies,
+                  selectedTechnologies,
+                ),
+                ...createTermsObject(FIELD_NAMES.type, selectedTypes),
+                ...createTermsObject(
+                  FIELD_NAMES.organisation_name,
+                  selectedOrganizations,
+                ),
+                ...createTermsObject(FIELD_NAMES.country, selectedCountries),
+                ...createRangeObject(FIELD_NAMES.filter_date, selectedDate),
               ],
             },
           },
@@ -93,44 +109,43 @@ export async function handleSearchTwo(
       aggs: {
         unique_applications: {
           terms: {
-            field: "applications.keyword",
+            field: FIELD_NAMES.applications,
           },
         },
         unique_technologies: {
           terms: {
-            field: "technologies.keyword",
+            field: FIELD_NAMES.technologies,
           },
         },
         unique_types: {
           terms: {
-            field: "type.keyword",
+            field: FIELD_NAMES.type,
           },
         },
         unique_organizations: {
           terms: {
-            field: "organisation_name.keyword",
+            field: FIELD_NAMES.organisation_name,
           },
         },
         unique_countries: {
           terms: {
-            field: "country.keyword",
+            field: FIELD_NAMES.country,
           },
         },
         unique_dates: {
           date_histogram: {
-            field: "filter_date",
+            field: FIELD_NAMES.filter_date,
             calendar_interval: "year",
-            format: "yyyy", // Format the date as a year
+            format: "yyyy",
           },
         },
       },
     },
   };
 
-  let response = await client.search(elasticSearchParams);
+  const response = await client.search(elasticSearchParams);
   const data = response;
   const documents = data.hits.hits.map((hit) => hit._source);
-
   const total = data.hits.total;
   const uniqueApplications = data.aggregations.unique_applications.buckets.map(
     (bucket) => bucket.key,

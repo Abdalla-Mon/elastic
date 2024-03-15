@@ -23,12 +23,12 @@ export function CategoriesFilter() {
     selectedDate,
     setSelectedDate,
   } = useContext(ElasticSearchContext);
-  const [data, setData] = useState([]);
+  let [data, setData] = useState([]);
   const [fetchQuery, setFetchQuery] = useState(search);
-
+  const [currentFilter, setCurrentFilter] = useState(null);
   useEffect(() => {
     const fetchData = async () => {
-      const newData = await handleSearchTwo(
+      let newData = await handleSearchTwo(
         fetchQuery,
         page - 1,
         size,
@@ -40,6 +40,9 @@ export function CategoriesFilter() {
         selectedDate,
         true,
       );
+      if (currentFilter) {
+        newData[currentFilter] = data[currentFilter];
+      }
       setData(newData);
     };
     fetchData();
@@ -61,179 +64,115 @@ export function CategoriesFilter() {
     }
   }, [search]);
 
-  const uniqueApplications = data?.uniqueApplications || [];
-  const uniqueTechnologies = data?.uniqueTechnologies || [];
-  const uniqueTypes = data?.uniqueTypes || [];
-  const uniqueOrganizations = data?.uniqueOrganizations || [];
-  const uniqueCountries = data?.uniqueCountries || [];
-  const uniqueDates = data?.uniqueDates || [];
+  let uniqueApplications = data?.uniqueApplications || [];
+  let uniqueTechnologies = data?.uniqueTechnologies || [];
+  let uniqueTypes = data?.uniqueTypes || [];
+  let uniqueOrganizations = data?.uniqueOrganizations || [];
+  let uniqueCountries = data?.uniqueCountries || [];
+  let uniqueDates = data?.uniqueDates || [];
 
   function handleAppsChange(newValue) {
     setSelectedApplications(newValue);
+    setCurrentFilter("uniqueApplications");
   }
 
-  function handleTechsChange(newValue) {
+  function handleTechsChange(newValue, reason) {
     setSelectedTechnologies(newValue);
+    setCurrentFilter("uniqueTechnologies");
   }
 
   function handleTypesChange(newValue) {
     setSelectedTypes(newValue);
+    setCurrentFilter("uniqueTypes");
   }
 
   function handleOrgsChange(newValue) {
     setSelectedOrganizations(newValue);
+    setCurrentFilter("uniqueOrganizations");
   }
 
   function handleCountriesChange(newValue) {
     setSelectedCountries(newValue);
+    setCurrentFilter("uniqueCountries");
   }
 
   function handleDateChange(newValue) {
     setSelectedDate(newValue);
+    setCurrentFilter("uniqueDates");
   }
+
+  const filters = [
+    {
+      id: "application-select",
+      options: uniqueApplications,
+      value: selectedApplications,
+      onChange: handleAppsChange,
+      label: "Application",
+    },
+    {
+      id: "technology-select",
+      options: uniqueTechnologies,
+      value: selectedTechnologies,
+      onChange: handleTechsChange,
+      label: "Technology",
+    },
+    {
+      id: "type-select",
+      options: uniqueTypes,
+      value: selectedTypes,
+      onChange: handleTypesChange,
+      label: "Type",
+    },
+    {
+      id: "organization-select",
+      options: uniqueOrganizations,
+      value: selectedOrganizations,
+      onChange: handleOrgsChange,
+      label: "Organization",
+    },
+    {
+      id: "country-select",
+      options: uniqueCountries,
+      value: selectedCountries,
+      onChange: handleCountriesChange,
+      label: "Country",
+    },
+    {
+      id: "date-select",
+      options: uniqueDates,
+      value: Array.isArray(selectedDate) ? selectedDate : [],
+      onChange: handleDateChange,
+      label: "Date",
+    },
+  ];
 
   return (
     <div className=" w-full flex flex-col gap-5 pt-8   border-r border-[#2f528f] p-5 ">
-      <Autocomplete
-        multiple
-        id="application-select"
-        options={uniqueApplications}
-        value={uniqueApplications.filter((option) =>
-          selectedApplications.includes(option),
-        )}
-        onChange={(event, newValue) => {
-          handleAppsChange(newValue);
-        }}
-        renderInput={(params) => (
-          <TextField {...params} variant="outlined" label="Application" />
-        )}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              label={option}
-              {...getTagProps({ index })}
-              key={option + index}
-            />
-          ))
-        }
-      />
-      <Autocomplete
-        multiple
-        id="technology-select"
-        options={uniqueTechnologies}
-        value={uniqueTechnologies.filter((option) =>
-          selectedTechnologies.includes(option),
-        )}
-        onChange={(event, newValue) => {
-          handleTechsChange(newValue);
-        }}
-        renderInput={(params) => (
-          <TextField {...params} variant="outlined" label="Technology" />
-        )}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              label={option}
-              {...getTagProps({ index })}
-              key={option + index}
-            />
-          ))
-        }
-      />
-      <Autocomplete
-        multiple
-        id="type-select"
-        options={uniqueTypes}
-        value={uniqueTypes.filter((option) => selectedTypes.includes(option))}
-        onChange={(event, newValue) => {
-          handleTypesChange(newValue);
-        }}
-        renderInput={(params) => (
-          <TextField {...params} variant="outlined" label="Type" />
-        )}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              label={option}
-              {...getTagProps({ index })}
-              key={option + index}
-            />
-          ))
-        }
-      />
-      <Autocomplete
-        multiple
-        id="organization-select"
-        options={uniqueOrganizations}
-        value={uniqueOrganizations.filter((option) =>
-          selectedOrganizations.includes(option),
-        )}
-        onChange={(event, newValue) => {
-          handleOrgsChange(newValue);
-        }}
-        renderInput={(params) => (
-          <TextField {...params} variant="outlined" label="Organization" />
-        )}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              label={option}
-              {...getTagProps({ index })}
-              key={option + index}
-            />
-          ))
-        }
-      />
-      <Autocomplete
-        multiple
-        id="country-select"
-        options={uniqueCountries}
-        value={uniqueCountries.filter((option) =>
-          selectedCountries.includes(option),
-        )}
-        onChange={(event, newValue) => {
-          handleCountriesChange(newValue);
-        }}
-        renderInput={(params) => (
-          <TextField {...params} variant="outlined" label="Country" />
-        )}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              label={option}
-              {...getTagProps({ index })}
-              key={option + index}
-            />
-          ))
-        }
-      />
-      <Autocomplete
-        multiple
-        id="date-select"
-        options={uniqueDates}
-        value={Array.isArray(selectedDate) ? selectedDate : []}
-        onChange={(event, newValue) => {
-          handleDateChange(newValue);
-        }}
-        renderInput={(params) => (
-          <TextField {...params} variant="outlined" label="Date" />
-        )}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              label={option}
-              {...getTagProps({ index })}
-              key={option + index}
-            />
-          ))
-        }
-      />
+      {filters.map((filter) => (
+        <Autocomplete
+          multiple
+          id={filter.id}
+          options={filter.options}
+          key={filter.id}
+          value={filter.value}
+          onChange={(event, newValue) => {
+            filter.onChange(newValue);
+          }}
+          renderInput={(params) => (
+            <TextField {...params} variant="outlined" label={filter.label} />
+          )}
+          renderTags={(value, getTagProps) =>
+            value.map((option, index) => (
+              <Chip
+                variant="outlined"
+                label={option}
+                {...getTagProps({ index })}
+                key={option + index}
+              />
+            ))
+          }
+        />
+      ))}
     </div>
   );
 }
