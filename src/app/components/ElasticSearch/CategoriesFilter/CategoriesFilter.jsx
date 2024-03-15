@@ -73,32 +73,32 @@ export function CategoriesFilter() {
 
   function handleAppsChange(newValue) {
     setSelectedApplications(newValue);
-    setCurrentFilter("uniqueApplications");
+    setCurrentFilter(newValue.length && "uniqueApplications");
   }
 
   function handleTechsChange(newValue, reason) {
     setSelectedTechnologies(newValue);
-    setCurrentFilter("uniqueTechnologies");
+    setCurrentFilter(newValue.length && "uniqueTechnologies");
   }
 
   function handleTypesChange(newValue) {
     setSelectedTypes(newValue);
-    setCurrentFilter("uniqueTypes");
+    setCurrentFilter(newValue.length && "uniqueTypes");
   }
 
   function handleOrgsChange(newValue) {
     setSelectedOrganizations(newValue);
-    setCurrentFilter("uniqueOrganizations");
+    setCurrentFilter(newValue.length && "uniqueOrganizations");
   }
 
   function handleCountriesChange(newValue) {
     setSelectedCountries(newValue);
-    setCurrentFilter("uniqueCountries");
+    setCurrentFilter(newValue.length && "uniqueCountries");
   }
 
   function handleDateChange(newValue) {
     setSelectedDate(newValue);
-    setCurrentFilter("uniqueDates");
+    setCurrentFilter(newValue.length && "uniqueDates");
   }
 
   const filters = [
