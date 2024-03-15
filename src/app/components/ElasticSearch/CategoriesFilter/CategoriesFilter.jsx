@@ -43,7 +43,17 @@ export function CategoriesFilter() {
       setData(newData);
     };
     fetchData();
-  }, [fetchQuery, page, size, selectedApplications, selectedTechnologies]);
+  }, [
+    fetchQuery,
+    page,
+    size,
+    selectedApplications,
+    selectedTechnologies,
+    selectedTypes,
+    selectedOrganizations,
+    selectedCountries,
+    selectedDate,
+  ]);
 
   useEffect(() => {
     if (search !== fetchQuery) {

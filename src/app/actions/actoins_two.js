@@ -74,7 +74,16 @@ export async function handleSearchTwo(
                   ? [{ terms: { "country.keyword": selectedCountries } }]
                   : []),
                 ...(selectedDate.length > 0
-                  ? [{ terms: { filter_date: selectedDate } }]
+                  ? [
+                      {
+                        range: {
+                          filter_date: {
+                            gte: `${selectedDate}-01-01`,
+                            lte: `${selectedDate}-12-31`,
+                          },
+                        },
+                      },
+                    ]
                   : []),
               ],
             },
@@ -108,8 +117,10 @@ export async function handleSearchTwo(
           },
         },
         unique_dates: {
-          terms: {
+          date_histogram: {
             field: "filter_date",
+            calendar_interval: "year",
+            format: "yyyy", // Format the date as a year
           },
         },
       },
@@ -135,8 +146,8 @@ export async function handleSearchTwo(
   const uniqueCountries = data.aggregations.unique_countries.buckets.map(
     (bucket) => bucket.key,
   );
-  const uniqueDates = data.aggregations.unique_dates.buckets.map((bucket) =>
-    bucket.key_as_string.substring(0, 10),
+  const uniqueDates = data.aggregations.unique_dates.buckets.map(
+    (bucket) => bucket.key_as_string,
   );
   return {
     documents,
