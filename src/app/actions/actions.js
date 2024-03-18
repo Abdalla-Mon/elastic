@@ -3,9 +3,9 @@ import { Client } from "@elastic/elasticsearch";
 import { FILTER_FIELDS, indexName, queryFields } from "@/app/filterFields";
 
 const client = new Client({
-  node: " https://6aec9ca46ed5408d922a6b08e0459821.us-central1.gcp.cloud.es.io:443",
+  node: process.env.ELASTIC_NODE_URL,
   auth: {
-    apiKey: "OW5tOUw0NEIxeUQzcUxUUXhuQmI6b2hzY0xwUHZSNXlBTkFQc3lvbnhVQQ==",
+    apiKey: process.env.ELASTIC_API_KEY,
   },
 });
 
