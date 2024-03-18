@@ -3,41 +3,24 @@ import { Autocomplete } from "@mui/material";
 import { TextField, Chip } from "@mui/material";
 import { ElasticSearchContext } from "@/app/contexts/ElasticSearchContext";
 import { handleSearch } from "@/app/actions/actions";
-import { handleSearchTwo } from "@/app/actions/actoins_two";
+import { FILTER_FIELDS } from "@/app/filterFields";
 
 export function CategoriesFilter() {
-  const {
-    search,
-    selectedApplications,
-    page,
-    size,
-    setSelectedApplications,
-    selectedTechnologies,
-    setSelectedTechnologies,
-    selectedTypes,
-    setSelectedTypes,
-    selectedOrganizations,
-    setSelectedOrganizations,
-    selectedCountries,
-    setSelectedCountries,
-    selectedDate,
-    setSelectedDate,
-  } = useContext(ElasticSearchContext);
+  const { search, page, size, selectedFilters, setSelectedFilters } =
+    useContext(ElasticSearchContext);
   let [data, setData] = useState([]);
   const [fetchQuery, setFetchQuery] = useState(search);
   const [currentFilter, setCurrentFilter] = useState(null);
   useEffect(() => {
     const fetchData = async () => {
-      let newData = await handleSearchTwo(
+      const filterArgs = FILTER_FIELDS.map(
+        (field) => selectedFilters[field.uiName],
+      );
+      let newData = await handleSearch(
         fetchQuery,
         page - 1,
         size,
-        selectedApplications,
-        selectedTechnologies,
-        selectedTypes,
-        selectedOrganizations,
-        selectedCountries,
-        selectedDate,
+        ...filterArgs,
         true,
       );
       if (currentFilter) {
@@ -46,256 +29,75 @@ export function CategoriesFilter() {
       setData(newData);
     };
     fetchData();
-  }, [
-    fetchQuery,
-    page,
-    size,
-    selectedApplications,
-    selectedTechnologies,
-    selectedTypes,
-    selectedOrganizations,
-    selectedCountries,
-    selectedDate,
-    search,
-  ]);
+  }, [fetchQuery, page, size, selectedFilters, search]);
 
   useEffect(() => {
     if (search !== fetchQuery) {
       setFetchQuery(search);
       setCurrentFilter(null);
-      setSelectedApplications([]);
-      setSelectedTechnologies([]);
-      setSelectedTypes([]);
-      setSelectedOrganizations([]);
-      setSelectedCountries([]);
-      setSelectedDate([]);
+      setSelectedFilters(
+        FILTER_FIELDS.reduce((acc, field) => {
+          acc[field.uiName] = [];
+          return acc;
+        }, {}),
+      );
     }
   }, [search]);
 
-  let uniqueApplications = data?.uniqueApplications || [];
-  let uniqueTechnologies = data?.uniqueTechnologies || [];
-  let uniqueTypes = data?.uniqueTypes || [];
-  let uniqueOrganizations = data?.uniqueOrganizations || [];
-  let uniqueCountries = data?.uniqueCountries || [];
-  let uniqueDates = data?.uniqueDates || [];
-
-  function handleAppsChange(newValue) {
-    setSelectedApplications(newValue);
-    setCurrentFilter(newValue.length && "uniqueApplications");
+  function handleFilterChange(filterName, newValue) {
+    setSelectedFilters((prevFilters) => ({
+      ...prevFilters,
+      [filterName]: newValue,
+    }));
+    setCurrentFilter(
+      newValue.length &&
+        `unique${filterName.charAt(0).toUpperCase() + filterName.slice(1)}`,
+    );
   }
 
-  function handleTechsChange(newValue, reason) {
-    setSelectedTechnologies(newValue);
-    setCurrentFilter(newValue.length && "uniqueTechnologies");
-  }
-
-  function handleTypesChange(newValue) {
-    setSelectedTypes(newValue);
-    setCurrentFilter(newValue.length && "uniqueTypes");
-  }
-
-  function handleOrgsChange(newValue) {
-    setSelectedOrganizations(newValue);
-    setCurrentFilter(newValue.length && "uniqueOrganizations");
-  }
-
-  function handleCountriesChange(newValue) {
-    setSelectedCountries(newValue);
-    setCurrentFilter(newValue.length && "uniqueCountries");
-  }
-
-  function handleDateChange(newValue) {
-    setSelectedDate(newValue);
-    setCurrentFilter(newValue.length && "uniqueDates");
-  }
-
-  const filters = [
-    {
-      id: "application-select",
-      options: uniqueApplications,
-      value: selectedApplications,
-      onChange: handleAppsChange,
-      label: "Application",
-    },
-    {
-      id: "technology-select",
-      options: uniqueTechnologies,
-      value: selectedTechnologies,
-      onChange: handleTechsChange,
-      label: "Technology",
-    },
-    {
-      id: "type-select",
-      options: uniqueTypes,
-      value: selectedTypes,
-      onChange: handleTypesChange,
-      label: "Type",
-    },
-    {
-      id: "organization-select",
-      options: uniqueOrganizations,
-      value: selectedOrganizations,
-      onChange: handleOrgsChange,
-      label: "Organization",
-    },
-    {
-      id: "country-select",
-      options: uniqueCountries,
-      value: selectedCountries,
-      onChange: handleCountriesChange,
-      label: "Country",
-    },
-    {
-      id: "date-select",
-      options: uniqueDates,
-      value: Array.isArray(selectedDate) ? selectedDate : [],
-      onChange: handleDateChange,
-      label: "Date",
-    },
-  ];
-
+  const filters = FILTER_FIELDS.map((field) => ({
+    id: `${field.uiName}-select`,
+    options:
+      data?.[
+        `unique${field.uiName.charAt(0).toUpperCase() + field.uiName.slice(1)}`
+      ] || [],
+    value: selectedFilters[field.uiName],
+    onChange: (newValue) => handleFilterChange(field.uiName, newValue),
+    label: field.uiName.charAt(0).toUpperCase() + field.uiName.slice(1),
+  }));
+  const filterDate = (selectedDate) =>
+    Array.isArray(selectedDate) ? selectedDate : [];
   return (
     <div className=" w-full flex flex-col gap-5 pt-8   border-r border-[#2f528f] p-5 ">
-      <Autocomplete
-        multiple
-        id="application-select"
-        options={uniqueApplications}
-        value={uniqueApplications.filter((option) =>
-          selectedApplications.includes(option),
-        )}
-        onChange={(event, newValue) => {
-          handleAppsChange(newValue);
-        }}
-        renderInput={(params) => (
-          <TextField {...params} variant="outlined" label="Application" />
-        )}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              label={option}
-              {...getTagProps({ index })}
-              key={option + index}
-            />
-          ))
-        }
-      />
-      <Autocomplete
-        multiple
-        id="technology-select"
-        options={uniqueTechnologies}
-        value={uniqueTechnologies.filter((option) =>
-          selectedTechnologies.includes(option),
-        )}
-        onChange={(event, newValue) => {
-          handleTechsChange(newValue);
-        }}
-        renderInput={(params) => (
-          <TextField {...params} variant="outlined" label="Technology" />
-        )}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              label={option}
-              {...getTagProps({ index })}
-              key={option + index}
-            />
-          ))
-        }
-      />
-      <Autocomplete
-        multiple
-        id="type-select"
-        options={uniqueTypes}
-        value={uniqueTypes.filter((option) => selectedTypes.includes(option))}
-        onChange={(event, newValue) => {
-          handleTypesChange(newValue);
-        }}
-        renderInput={(params) => (
-          <TextField {...params} variant="outlined" label="Type" />
-        )}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              label={option}
-              {...getTagProps({ index })}
-              key={option + index}
-            />
-          ))
-        }
-      />
-      <Autocomplete
-        multiple
-        id="organization-select"
-        options={uniqueOrganizations}
-        value={uniqueOrganizations.filter((option) =>
-          selectedOrganizations.includes(option),
-        )}
-        onChange={(event, newValue) => {
-          handleOrgsChange(newValue);
-        }}
-        renderInput={(params) => (
-          <TextField {...params} variant="outlined" label="Organization" />
-        )}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              label={option}
-              {...getTagProps({ index })}
-              key={option + index}
-            />
-          ))
-        }
-      />
-      <Autocomplete
-        multiple
-        id="country-select"
-        options={uniqueCountries}
-        value={uniqueCountries.filter((option) =>
-          selectedCountries.includes(option),
-        )}
-        onChange={(event, newValue) => {
-          handleCountriesChange(newValue);
-        }}
-        renderInput={(params) => (
-          <TextField {...params} variant="outlined" label="Country" />
-        )}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              label={option}
-              {...getTagProps({ index })}
-              key={option + index}
-            />
-          ))
-        }
-      />
-      <Autocomplete
-        multiple
-        id="date-select"
-        options={uniqueDates}
-        value={Array.isArray(selectedDate) ? selectedDate : []}
-        onChange={(event, newValue) => {
-          handleDateChange(newValue);
-        }}
-        renderInput={(params) => (
-          <TextField {...params} variant="outlined" label="Date" />
-        )}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              variant="outlined"
-              label={option}
-              {...getTagProps({ index })}
-              key={option + index}
-            />
-          ))
-        }
-      />
+      {filters.map((filter) => (
+        <Autocomplete
+          multiple={filter.id !== "filter_date"}
+          id={filter.id}
+          options={filter.options}
+          key={filter.id}
+          value={
+            filter.id === "filter_date"
+              ? filterDate(option)
+              : filter.options.filter((option) => filter.value.includes(option))
+          }
+          onChange={(event, newValue) => {
+            filter.onChange(newValue);
+          }}
+          renderInput={(params) => (
+            <TextField {...params} variant="outlined" label={filter.label} />
+          )}
+          renderTags={(value, getTagProps) =>
+            value.map((option, index) => (
+              <Chip
+                variant="outlined"
+                label={option}
+                {...getTagProps({ index })}
+                key={option + index}
+              />
+            ))
+          }
+        />
+      ))}
     </div>
   );
 }

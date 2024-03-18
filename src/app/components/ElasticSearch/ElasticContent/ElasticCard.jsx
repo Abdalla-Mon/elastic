@@ -9,6 +9,11 @@ import {
 } from "@mui/material";
 import { ElasticSearchContext } from "@/app/contexts/ElasticSearchContext";
 import { motion } from "framer-motion";
+import {
+  descriptionField,
+  displayFields,
+  titleFields,
+} from "@/app/filterFields";
 
 export function ElasticCard({ data }) {
   const { search } = useContext(ElasticSearchContext);
@@ -23,7 +28,7 @@ export function ElasticCard({ data }) {
     return () => clearTimeout(timeoutId);
   }, [data]);
 
-  const highlightedText = data.abstract
+  const highlightedText = data[descriptionField]
     .split(new RegExp(`(${search})`, "gi"))
     .map((part, i) =>
       part.toLowerCase() === search.toLowerCase() && part !== "" ? (
@@ -44,16 +49,19 @@ export function ElasticCard({ data }) {
             component="div"
             sx={{ fontWeight: "bold" }}
           >
-            {data.title}
+            {data[titleFields]}
           </Typography>
         </Link>
-        <DisplayData
-          arrayOfData={data.organisation_name}
-          text={data.country}
-          name={"Organisation:"}
-        />
-        <DisplayData arrayOfData={data.applications} name={"Applications:"} />
-        <DisplayData arrayOfData={data.technologies} name={"Technologies:"} />
+        {displayFields.map((field) => {
+          return (
+            <DisplayData
+              arrayOfData={data[field.arrayOfData]}
+              name={field.uiName}
+              extra={field.extra}
+              key={field.uiName}
+            />
+          );
+        })}
 
         <Box
           ref={ref}
@@ -96,7 +104,7 @@ export function ElasticCard({ data }) {
   );
 }
 
-export function DisplayData({ arrayOfData, text, name }) {
+export function DisplayData({ arrayOfData, extra, name }) {
   return (
     <Typography variant="body1" color="text.secondary" className={"mb-3"}>
       <span className={"font-bold"}>{name} </span>
@@ -104,7 +112,7 @@ export function DisplayData({ arrayOfData, text, name }) {
         "None"
       ) : (
         <span>
-          {arrayOfData.join(", ")} {text && "- " + text}
+          {arrayOfData.join(", ")} {extra && "- " + extra}
         </span>
       )}
     </Typography>

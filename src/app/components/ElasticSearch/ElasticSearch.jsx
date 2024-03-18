@@ -6,25 +6,12 @@ import ElasticSearchField from "@/app/components/ElasticSearch/ElasticSearchFilt
 import ElasticSizeOfItemsPerPage from "@/app/components/ElasticSearch/ElasticSearchFilters/ElasticSizeOfItemsPerPage";
 import ElasticContainer from "@/app/components/ElasticSearch/ElasticContent/ElasticContainer";
 import ElasticPagination from "@/app/components/ElasticSearch/ElasticSearchFilters/ElasticPagination";
-import { FontSizeChanger } from "@/app/components/ElasticSearch/ElasticSearchFilters/FontSizeChange";
 import { CategoriesFilter } from "@/app/components/ElasticSearch/CategoriesFilter/CategoriesFilter";
 import { motion } from "framer-motion";
 
 export default function ElasticSearch() {
-  const {
-    search,
-    page,
-    size,
-    error,
-    fetchData,
-    selectedApplications,
-    selectedTechnologies,
-    selectedTypes,
-    selectedOrganizations,
-    selectedCountries,
-    selectedDate,
-    data,
-  } = useContext(ElasticSearchContext);
+  const { search, page, size, error, fetchData, selectedFilters, data } =
+    useContext(ElasticSearchContext);
 
   const [show, setShow] = useState(false);
   const animation = {
@@ -33,17 +20,7 @@ export default function ElasticSearch() {
   };
   useEffect(() => {
     fetchData();
-  }, [
-    search,
-    page,
-    size,
-    selectedApplications,
-    selectedTechnologies,
-    selectedTypes,
-    selectedOrganizations,
-    selectedCountries,
-    selectedDate,
-  ]);
+  }, [search, page, size, selectedFilters]);
   if (error) {
     return <p>Error: {error}</p>;
   }

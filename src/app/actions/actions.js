@@ -1,5 +1,6 @@
 "use server";
 import { Client } from "@elastic/elasticsearch";
+import { FILTER_FIELDS, indexName, queryFields } from "@/app/filterFields";
 
 const client = new Client({
   node: " https://6aec9ca46ed5408d922a6b08e0459821.us-central1.gcp.cloud.es.io:443",
@@ -8,148 +9,105 @@ const client = new Client({
   },
 });
 
-export async function handleSearch(
-  q,
-  page = 1,
-  size = 2,
-  selectedApplications = [],
-  selectedTechnologies = [],
-  selectedTypes = [],
-  selectedOrganizations = [],
-  selectedCountries = [],
-  selectedDate = null,
-  noFilters = false,
-) {
+function createTermsObject(fieldName, values) {
+  return values.length ? [{ terms: { [fieldName]: values } }] : [];
+}
+
+function createRangeObject(fieldName, values) {
+  if (values.length) {
+    const years = values.map((value) => new Date(value).getFullYear());
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
+    return [
+      {
+        range: {
+          [fieldName]: {
+            gte: `${minYear}-01-01`,
+            lte: `${maxYear}-12-31`,
+          },
+        },
+      },
+    ];
+  } else {
+    return [];
+  }
+}
+
+export async function handleSearch(q, page = 1, size = 2, ...selectedFilters) {
+  const mustQuery = [
+    q === ""
+      ? { match_all: {} }
+      : {
+          multi_match: {
+            query: q,
+            fields: queryFields,
+          },
+        },
+  ];
+
+  const filterMust = FILTER_FIELDS.flatMap((field, index) =>
+    field.uiName === "dates"
+      ? createRangeObject(field.filterId, selectedFilters[index])
+      : createTermsObject(field.filterId, selectedFilters[index]),
+  );
+
+  const aggs = FILTER_FIELDS.reduce((acc, field) => {
+    acc[`unique_${field.uiName}`] =
+      field.uiName === "dates"
+        ? {
+            date_histogram: {
+              field: field.filterId,
+              calendar_interval: "year",
+              format: "yyyy",
+            },
+          }
+        : {
+            terms: {
+              field: field.filterId,
+            },
+          };
+    return acc;
+  }, {});
+
   const elasticSearchParams = {
-    index: "generated_items",
+    index: indexName,
     size: size,
     from: page,
     body: {
       query: {
         bool: {
-          must: [
-            q === ""
-              ? { match_all: {} }
-              : {
-                  multi_match: {
-                    query: q,
-                    fields: ["text", "title"],
-                  },
-                },
-          ],
-          filter: noFilters
-            ? []
-            : {
-                bool: {
-                  should: [
-                    ...(selectedApplications.length > 0
-                      ? [
-                          {
-                            terms: {
-                              "applications.keyword": selectedApplications,
-                            },
-                          },
-                        ]
-                      : []),
-                    ...(selectedTechnologies.length > 0
-                      ? [
-                          {
-                            terms: {
-                              "technologies.keyword": selectedTechnologies,
-                            },
-                          },
-                        ]
-                      : []),
-                    ...(selectedTypes.length > 0
-                      ? [{ terms: { "item_type.keyword": selectedTypes } }]
-                      : []),
-                    ...(selectedOrganizations.length > 0
-                      ? [
-                          {
-                            terms: {
-                              "organisation_name.keyword":
-                                selectedOrganizations,
-                            },
-                          },
-                        ]
-                      : []),
-                    ...(selectedCountries.length > 0
-                      ? [{ terms: { "country.keyword": selectedCountries } }]
-                      : []),
-                    ...(selectedDate.length > 0
-                      ? [{ terms: { filter_date: selectedDate } }]
-                      : []),
-                  ],
-                  minimum_should_match: 1,
-                },
-              },
-        },
-      },
-      aggs: {
-        unique_applications: {
-          terms: {
-            field: "applications.keyword",
-          },
-        },
-        unique_technologies: {
-          terms: {
-            field: "technologies.keyword",
-          },
-        },
-        unique_types: {
-          terms: {
-            field: "item_type.keyword",
-          },
-        },
-        unique_organizations: {
-          terms: {
-            field: "organisation_name.keyword",
-          },
-        },
-        unique_countries: {
-          terms: {
-            field: "country.keyword",
-          },
-        },
-        unique_dates: {
-          terms: {
-            field: "filter_date",
+          must: mustQuery,
+          filter: {
+            bool: {
+              must: filterMust,
+            },
           },
         },
       },
+      aggs: aggs,
     },
   };
 
-  let response = await client.search(elasticSearchParams);
+  const response = await client.search(elasticSearchParams);
   const data = response;
   const documents = data.hits.hits.map((hit) => hit._source);
-
   const total = data.hits.total;
-  const uniqueApplications = data.aggregations.unique_applications.buckets.map(
-    (bucket) => bucket.key,
-  );
-  const uniqueTechnologies = data.aggregations.unique_technologies.buckets.map(
-    (bucket) => bucket.key,
-  );
-  const uniqueTypes = data.aggregations.unique_types.buckets.map(
-    (bucket) => bucket.key,
-  );
-  const uniqueOrganizations =
-    data.aggregations.unique_organizations.buckets.map((bucket) => bucket.key);
-  const uniqueCountries = data.aggregations.unique_countries.buckets.map(
-    (bucket) => bucket.key,
-  );
-  const uniqueDates = data.aggregations.unique_dates.buckets.map((bucket) =>
-    bucket.key_as_string.substring(0, 10),
-  );
+  const uniqueFilters = FILTER_FIELDS.reduce((acc, field) => {
+    acc[
+      `unique${field.uiName.charAt(0).toUpperCase() + field.uiName.slice(1)}`
+    ] = data.aggregations[`unique_${field.uiName}`].buckets.map((bucket) => {
+      if (field.uiName === "dates") {
+        // Convert Unix timestamp to date
+        return new Date(bucket.key).toISOString().split("T")[0];
+      } else {
+        return bucket.key;
+      }
+    });
+    return acc;
+  }, {});
   return {
     documents,
     total: total.value,
-    uniqueApplications,
-    uniqueTechnologies,
-    uniqueTypes,
-    uniqueOrganizations,
-    uniqueCountries,
-    uniqueDates,
+    ...uniqueFilters,
   };
 }

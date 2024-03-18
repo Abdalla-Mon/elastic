@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Elastic Search Application Modification Guide
 
-## Getting Started
+This guide will walk you through the steps to modify the Elastic Search application in your project.
 
-First, run the development server:
+## Step 1: Create an Index (If you don't have one)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Before you can modify the Elastic Search application, you need to create an index unless u already have an index. This can be done either through backend integration or using the Elasticsearch dashboard.
+
+### Using the Dashboard
+
+1. Go to your Elasticsearch dashboard.
+2. Navigate to `Search > Search Applications`.
+3. Click on `Create`.
+4. Select the Elasticsearch indices you want to use for your search application.
+5. Name your search application.
+6. Click on `Create`.
+
+You have now created your index.
+
+## Step 2: Modify the Project
+
+After creating the index, navigate to the project folder and open the `filterFields.js` file located in `src/app`. This file contains several fields that you can modify as per your requirements.
+
+### indexName
+
+This is where you specify the name of the index you created in Step 1.
+
+### FILTER_FIELDS
+
+This array contains the filters that are shown in the UI. Each object in the array has two properties: `uiName` and `filterId`.
+
+- `uiName`: This is the name that will be displayed in the UI. You can name it as per your preference.
+- `filterId`: This should correspond to the key in your document. You can find this in the index mapping of your index. For example, if the field key is `application` and its type is `keyword`, you would write `application.keyword`.
+
+### queryFields
+
+This array contains the fields that the search operation will be performed on.
+
+### titleFields and descriptionField
+
+These fields should be the same as the `queryFields`. They are associated with what will be shown in the UI.
+
+### displayFields
+
+This array contains objects that specify what data to display in your card. Each object has three properties: `uiName`, `arrayOfData`, and `extra`.
+
+- `uiName`: This is the name that will be displayed in the UI.
+- `arrayOfData`: This should be the key of the data you want to display. The data must be an array.
+- `extra`: This is optional. If you want to add extra text, you can specify it here.
+
+For example, if you have `arrayOfData: "organisation_name"` and `extra: "country"`, the UI will display something like this:
+
+```
+Organizations University of California System, University of California, Los Angeles (UCLA) - country
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+That's it! You have now modified the Elastic Search application in your project.

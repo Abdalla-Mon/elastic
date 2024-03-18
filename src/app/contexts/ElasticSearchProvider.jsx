@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { ElasticSearchContext } from "./ElasticSearchContext";
 import { handleSearch } from "@/app/actions/actions";
-import { handleSearchTwo } from "@/app/actions/actoins_two";
+import { FILTER_FIELDS } from "@/app/filterFields";
 
 export const ElasticSearchProvider = ({ children }) => {
   const [search, setSearch] = useState("");
@@ -11,29 +11,24 @@ export const ElasticSearchProvider = ({ children }) => {
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(25);
   const [error, setError] = useState(null);
-  const [fontSize, setFontSize] = useState(16);
-  const [selectedApplications, setSelectedApplications] = useState([]);
-  const [selectedTechnologies, setSelectedTechnologies] = useState([]);
-  const [selectedTypes, setSelectedTypes] = useState([]);
-  const [selectedOrganizations, setSelectedOrganizations] = useState([]);
-  const [selectedCountries, setSelectedCountries] = useState([]);
-  const [selectedDate, setSelectedDate] = useState("");
+  const filter = FILTER_FIELDS.reduce((acc, field) => {
+    acc[field.uiName] = [];
+    return acc;
+  }, {});
+
+  const [selectedFilters, setSelectedFilters] = useState({
+    ...filter,
+  });
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await handleSearchTwo(
-        search,
-        page - 1,
-        size,
-        selectedApplications,
-        selectedTechnologies,
-        selectedTypes,
-        selectedOrganizations,
-        selectedCountries,
-        selectedDate,
+      const filterArgs = FILTER_FIELDS.map(
+        (field) => selectedFilters[field.uiName],
       );
+
+      const data = await handleSearch(search, page - 1, size, ...filterArgs);
       setData(data);
     } catch (err) {
       setError(err.message);
@@ -57,20 +52,8 @@ export const ElasticSearchProvider = ({ children }) => {
         error,
         setError,
         fetchData,
-        fontSize,
-        setFontSize,
-        selectedApplications,
-        setSelectedApplications,
-        selectedTechnologies,
-        setSelectedTechnologies,
-        selectedTypes,
-        setSelectedTypes,
-        selectedOrganizations,
-        setSelectedOrganizations,
-        selectedCountries,
-        setSelectedCountries,
-        selectedDate,
-        setSelectedDate,
+        selectedFilters,
+        setSelectedFilters,
       }}
     >
       {children}
