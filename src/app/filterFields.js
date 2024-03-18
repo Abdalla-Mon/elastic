@@ -1,4 +1,4 @@
-export const indexName = "generated_items";
+export const indexName = "main";
 export const FILTER_FIELDS = [
   {
     uiName: "applications",
@@ -25,7 +25,7 @@ export const FILTER_FIELDS = [
     filterId: "filter_date",
   },
 ];
-export const queryFields = ["title", "text"];
+export const queryFields = ["title", "abstract"];
 export const titleFields = queryFields[0];
 export const descriptionField = queryFields[1];
 export const displayFields = [
