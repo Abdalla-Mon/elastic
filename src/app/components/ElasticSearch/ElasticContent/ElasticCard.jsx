@@ -27,7 +27,18 @@ export function ElasticCard({ data }) {
     const timeoutId = setTimeout(checkOverflow, 0);
     return () => clearTimeout(timeoutId);
   }, [data]);
-
+  // const searchWords = search.split(" ");
+  // const regex = new RegExp(`(${searchWords.join("|")})`, "gi");
+  //
+  // const highlightedText = data[descriptionField].split(regex).map((part, i) =>
+  //       searchWords.includes(part.toLowerCase()) && part !== "" ? (
+  //             <span key={i} style={{ backgroundColor: "yellow" }}>
+  //       {part}
+  //     </span>
+  //       ) : (
+  //             part
+  //       ),
+  // );
   const highlightedText = data[descriptionField]
     .split(new RegExp(`(${search})`, "gi"))
     .map((part, i) =>
@@ -57,7 +68,7 @@ export function ElasticCard({ data }) {
             <DisplayData
               arrayOfData={data[field.arrayOfData]}
               name={field.uiName}
-              extra={field.extra}
+              extra={data[field.extra]}
               key={field.uiName}
             />
           );

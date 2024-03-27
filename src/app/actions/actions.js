@@ -40,6 +40,7 @@ export async function handleSearch(q, page = 1, size = 2, ...selectedFilters) {
       : {
           multi_match: {
             query: q,
+            type: "phrase",
             fields: queryFields,
           },
         },
